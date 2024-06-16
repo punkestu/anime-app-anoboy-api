@@ -9,7 +9,7 @@ async function bootstrap() {
       process.env.NODE_ENV === 'production' &&
       request.hostname !== process.env.CORS_ORIGIN
     ) {
-      response.status(401).json({
+      return response.status(401).json({
         status: 401,
         message: 'You are not allowed to access this resource',
       });
