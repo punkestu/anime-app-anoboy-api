@@ -13,7 +13,7 @@ export interface MoreList {
 
 export interface Home {
   newsUpdate: NewsUpdate;
-  movies: MoreList;
-  liveActions: MoreList;
-  newAdded: MoreList;
+  // movies: MoreList;
+  // liveActions: MoreList;
+  // newAdded: MoreList;
 }
