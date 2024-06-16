@@ -1,6 +1,6 @@
 import { AnimeList } from './anime.model';
 
-export interface NewsUpdate {
+export interface PagedAnime {
   list: AnimeList;
   currentPage: number;
   totalPages: number;
@@ -12,7 +12,7 @@ export interface MoreList {
 }
 
 export interface Home {
-  newsUpdate: NewsUpdate;
+  newsUpdate: PagedAnime;
   // movies: MoreList;
   // liveActions: MoreList;
   // newAdded: MoreList;

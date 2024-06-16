@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cheerio from 'cheerio';
-import { AnimeSummary } from 'src/models/anime.model';
-import { Home } from 'src/models/pages.model';
+import { Anime, AnimeSummary } from 'src/models/anime.model';
+import { Home, PagedAnime } from 'src/models/pages.model';
 
 export default {
   getHome: async function (pageNum: number): Promise<Home> {
@@ -88,6 +88,77 @@ export default {
     // result.movies = moreList.movies;
     // result.liveActions = moreList.liveActions;
     // result.newAdded = moreList.newAdded;
+
+    return result;
+  },
+  search: async function (
+    search: string,
+    pageNum: number,
+  ): Promise<PagedAnime> {
+    const page = (
+      await axios.get(`${process.env.BASE_URL}/page/${pageNum}/?s=${search}`)
+    ).data;
+    const $ = Cheerio.load(page);
+    const result: PagedAnime = { list: { data: [] } } as PagedAnime;
+
+    // Parse the page and assign it to result
+    result.list.data = $('.column-content > a')
+      .map((_, el) => {
+        if (!$(el).attr('title').includes('Episode')) return undefined;
+        return {
+          url: $(el)
+            .attr('href')
+            .replace(process.env.BASE_URL + '/', ''),
+          title: $(el).attr('title'),
+          thumbnail: process.env.BASE_URL + $(el).find('amp-img').attr('src'),
+        } as AnimeSummary;
+      })
+      .get()
+      .filter((el) => el) as AnimeSummary[];
+    const [currentPage, totalPages] = $('.wp-pagenavi > .pages')
+      .text()
+      .split(' dari ')
+      .map((el) =>
+        parseInt(el.replace('Halaman', '').trim().split(',').join('')),
+      );
+    result.currentPage = currentPage;
+    result.totalPages = totalPages;
+
+    return result;
+  },
+  getDetail: async function (url: string, pageNum: number): Promise<Anime> {
+    const page = (
+      await axios.get(`${process.env.BASE_URL}/${url}/page/${pageNum}`)
+    ).data;
+    const $ = Cheerio.load(page);
+    const result = {} as Anime;
+
+    // Parse the page and assign it to result
+    result.title = $('.pagetitle > h1').text();
+    result.thumbnail =
+      process.env.BASE_URL +
+      $('.column-content > a > div > amp-img').attr('src');
+    result.recomendation = {
+      data: $('.column-content > a')
+        .map((_, el) => {
+          return {
+            url: $(el)
+              .attr('href')
+              .replace(process.env.BASE_URL + '/', ''),
+            title: $(el).attr('title'),
+            thumbnail: process.env.BASE_URL + $(el).find('amp-img').attr('src'),
+          } as AnimeSummary;
+        })
+        .get() as AnimeSummary[],
+    };
+    const [currentPage, totalPages] = $('.wp-pagenavi > .pages')
+      .text()
+      .split(' dari ')
+      .map((el) =>
+        parseInt(el.replace('Halaman', '').trim().split(',').join('')),
+      );
+    result.currentPage = currentPage || pageNum;
+    result.totalPages = totalPages;
 
     return result;
   },
